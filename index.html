@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Cleaner — messy CSV in, clean data out</title>
+<style>
+  :root{--navy:#0f2747;--ink:#13233b;--teal:#0f9e75;--teal-d:#0b7d5c;--blue:#1d6fd6;
+    --bg:#eef3fa;--card:#fff;--line:#e3e9f2;--muted:#5b6b80;--bad:#c0392b;--amber:#b9770f;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding:24px}
+  .wrap{max-width:1080px;margin:0 auto}
+  header{margin-bottom:18px}
+  h1{font-size:24px;color:var(--navy)} h1 .z{color:var(--teal-d)}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .grid{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+  .card h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px}
+  textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:12px;resize:vertical}
+  .filerow{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer}
+  .btn:hover{background:#f3f6fb} .btn.pri{background:var(--teal);color:#fff;border-color:var(--teal)} .btn.pri:hover{background:var(--teal-d)}
+  label.op{display:flex;align-items:center;gap:9px;font-size:14px;padding:7px 0;color:var(--ink);cursor:pointer}
+  label.op input{width:16px;height:16px;accent-color:var(--teal)}
+  .fr{display:flex;gap:6px;margin-top:6px}
+  .fr input{flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .stat{background:#f3f6fb;border-radius:10px;padding:8px 14px;font-size:13px;color:var(--muted)} .stat b{color:var(--navy);font-size:18px;display:block}
+  .stat.good b{color:var(--teal-d)} .stat.bad b{color:var(--bad)}
+  .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:420px}
+  table{border-collapse:collapse;width:100%;font-size:12px}
+  th{position:sticky;top:0;background:#0f2747;color:#fff;text-align:left;padding:8px 10px;white-space:nowrap;font-weight:600}
+  td{padding:6px 10px;border-bottom:1px solid #eef2f8;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+  tr:nth-child(even) td{background:#f8fafd}
+  .summary{font-size:13px;color:var(--muted);line-height:1.7;margin-top:10px}
+  .summary b{color:var(--navy)}
+  .empty{color:var(--muted);font-size:14px;padding:20px;text-align:center}
+  .tag{display:inline-block;background:#e6f4ef;color:var(--teal-d);font-size:12px;font-weight:600;padding:2px 9px;border-radius:20px;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧹 Data <span class="z">Cleaner</span></h1>
+    <div class="sub">Messy CSV / Excel-export in → clean, deduped, analysis-ready data out. Runs 100% in your browser — nothing is uploaded.</div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>1. Load data</h3>
+        <div class="filerow">
+          <button class="btn" onclick="document.getElementById('file').click()">📁 Choose CSV</button>
+          <input type="file" id="file" accept=".csv,.tsv,.txt" style="display:none">
+          <button class="btn" onclick="loadSample()">Use sample</button>
+        </div>
+        <textarea id="paste" placeholder="…or paste CSV here, then click Load"></textarea>
+        <button class="btn pri" style="width:100%;margin-top:8px" onclick="loadPaste()">Load pasted text</button>
+      </div>
+
+      <div class="card">
+        <h3>2. Cleaning options</h3>
+        <label class="op"><input type="checkbox" id="o_trim" checked> Trim spaces around cells</label>
+        <label class="op"><input type="checkbox" id="o_collapse" checked> Collapse double spaces</label>
+        <label class="op"><input type="checkbox" id="o_emptyrows" checked> Remove empty rows</label>
+        <label class="op"><input type="checkbox" id="o_dupes" checked> Remove duplicate rows</label>
+        <label class="op"><input type="checkbox" id="o_emptycols"> Remove empty columns</label>
+        <label class="op"><input type="checkbox" id="o_headers"> Standardize headers (lower_snake)</label>
+        <label class="op"><input type="checkbox" id="o_find"> Find &amp; replace</label>
+        <div class="fr"><input id="findv" placeholder="find"><input id="replv" placeholder="replace with"></div>
+        <button class="btn pri" style="width:100%;margin-top:12px" onclick="clean()">✨ Clean data</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3>Preview <span id="state" class="tag" style="display:none">cleaned</span></h3>
+        <div class="stats" id="stats"></div>
+        <div class="tablewrap" id="tablewrap"><div class="empty">Load a CSV to begin. Try “Use sample”.</div></div>
+        <div class="summary" id="summary"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn pri" onclick="download()" id="dlBtn" disabled>⤓ Download clean CSV</button>
+          <button class="btn" onclick="copyOut()" id="cpBtn" disabled>⧉ Copy to clipboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="sub" style="text-align:center;margin-top:18px">Built for Raven · offline · a demo of the Data Services offer. Real deliveries: this + pandas for the heavy lifting.</p>
+</div>
+
+<script>
+let RAW=null, OUT=null, lastSummary="";
+const $=id=>document.getElementById(id);
+
+function parseCSV(text){
+  text=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+  const delim = (text.split("\t").length>text.split(",").length)?"\t":",";
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c=='"'){ if(text[i+1]=='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else{ if(c=='"')q=true; else if(c==delim){row.push(cur);cur="";} else if(c=="\n"){row.push(cur);rows.push(row);row=[];cur="";} else cur+=c; }
+  }
+  if(cur.length||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+function toCSV(rows){
+  return rows.map(r=>r.map(c=>{c=c==null?"":String(c);
+    return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
+}
+function setData(rows){ RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true; }
+
+function render(rows,cleaned){
+  if(!rows||!rows.length){ $("tablewrap").innerHTML='<div class="empty">No rows.</div>'; return; }
+  const head=rows[0], body=rows.slice(1,51);
+  let h="<table><thead><tr>"+head.map(c=>"<th>"+esc(c)+"</th>").join("")+"</tr></thead><tbody>";
+  h+=body.map(r=>"<tr>"+head.map((_,i)=>"<td>"+esc(r[i]||"")+"</td>").join("")+"</tr>").join("");
+  h+="</tbody></table>";
+  $("tablewrap").innerHTML=h;
+  $("state").style.display=cleaned?"inline-block":"none";
+}
+function esc(s){return String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
+function statify(rows,cleaned){
+  const r=rows.length?rows.length-1:0, c=rows.length?rows[0].length:0;
+  let html='<div class="stat"><b>'+r+'</b>rows</div><div class="stat"><b>'+c+'</b>columns</div>';
+  if(cleaned){ html+='<div class="stat bad"><b>'+cleaned.rowsRemoved+'</b>rows removed</div>'
+    +'<div class="stat good"><b>'+cleaned.cellsChanged+'</b>cells fixed</div>'; }
+  $("stats").innerHTML=html;
+}
+
+function clean(){
+  if(!RAW){alert("Load some data first.");return;}
+  let rows=RAW.map(r=>r.slice());
+  const before=rows.length-1;
+  let cellsChanged=0;
+  const trim=$("o_trim").checked, coll=$("o_collapse").checked, fr=$("o_find").checked;
+  const fv=$("findv").value, rv=$("replv").value;
+  // cell-level
+  for(let i=0;i<rows.length;i++) for(let j=0;j<rows[i].length;j++){
+    let v=rows[i][j]==null?"":String(rows[i][j]); const o=v;
+    if(trim) v=v.trim();
+    if(coll) v=v.replace(/\s{2,}/g," ");
+    if(fr && fv) v=v.split(fv).join(rv);
+    if(v!==o) cellsChanged++;
+    rows[i][j]=v;
+  }
+  // headers
+  if($("o_headers").checked && rows.length){
+    rows[0]=rows[0].map(h=>h.trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,""));
+  }
+  const header=rows[0]||[];
+  let data=rows.slice(1);
+  // empty rows
+  let removedEmpty=0;
+  if($("o_emptyrows").checked){ const n=data.length; data=data.filter(r=>r.some(c=>String(c).trim()!=="")); removedEmpty=n-data.length; }
+  // dupes
+  let removedDupes=0;
+  if($("o_dupes").checked){ const seen=new Set(),out=[]; for(const r of data){const k=r.join(""); if(seen.has(k)){removedDupes++;continue;} seen.add(k);out.push(r);} data=out; }
+  // empty cols
+  let removedCols=0, colHeaders=header.slice(), cols=header.map((_,i)=>i);
+  if($("o_emptycols").checked){
+    const keep=cols.filter(ci=> data.some(r=>String(r[ci]||"").trim()!=="") || String(header[ci]||"").trim()!=="");
+    removedCols=cols.length-keep.length;
+    colHeaders=keep.map(i=>header[i]);
+    data=data.map(r=>keep.map(i=>r[i]));
+  }
+  OUT=[colHeaders].concat(data);
+  const summary={rowsRemoved:removedEmpty+removedDupes, cellsChanged};
+  render(OUT,true); statify(OUT,summary);
+  lastSummary="Cleaned: removed "+removedEmpty+" empty row(s), "+removedDupes+" duplicate row(s)"
+    +(removedCols?(", "+removedCols+" empty column(s)"):"")+"; fixed "+cellsChanged+" cell(s). "
+    +(before)+" → "+(OUT.length-1)+" rows.";
+  $("summary").innerHTML="<b>What I did:</b> "+lastSummary;
+  $("dlBtn").disabled=false; $("cpBtn").disabled=false;
+}
+function download(){ if(!OUT)return; const blob=new Blob([toCSV(OUT)],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="cleaned.csv"; a.click(); }
+function copyOut(){ if(!OUT)return; navigator.clipboard.writeText(toCSV(OUT)).then(()=>{$("cpBtn").textContent="✓ Copied";setTimeout(()=>$("cpBtn").textContent="⧉ Copy to clipboard",1500);}); }
+
+$("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader(); rd.onload=()=>setData(parseCSV(rd.result)); rd.readAsText(f);});
+function loadPaste(){const t=$("paste").value.trim(); if(!t){alert("Paste some CSV first.");return;} setData(parseCSV(t));}
+function loadSample(){
+  const s=`Name , Email,Amount,  City\n  Acme Corp , a@acme.com, 1200 ,Manila\nAcme Corp,a@acme.com,1200,Manila\n Beta LLC ,b@beta.io , 900,  Cebu\n,,,\nGamma Inc,g@gamma.com,, Davao \nBeta LLC,b@beta.io,900,Cebu`;
+  $("paste").value=s; setData(parseCSV(s));
+}
+</script>
+</body>
+</html>
