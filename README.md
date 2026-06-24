@@ -4,7 +4,7 @@ A fast, **zero-dependency** CSV cleaning tool that runs entirely in your browser
 upload, no backend. Drop in a messy spreadsheet export, get clean, deduplicated, analysis-ready
 data back. **Your data never leaves your machine.**
 
-🔗 **Live demo:** _[enable GitHub Pages → URL goes here]_
+🔗 **Live demo:** https://ghravenlabs.github.io/Data-Cleaner-Tool/
 
 ## Why
 Messy CSV/Excel exports are everywhere — stray whitespace, duplicate rows, empty rows, inconsistent
@@ -26,7 +26,7 @@ data (nothing is ever sent to a server).
 
 ## Run it
 - **Locally:** open `index.html` in any browser.
-- **Deploy:** push to GitHub and enable **Pages** (Settings → Pages → deploy from `main`) — it's a
+- **Deploy:** push to GitHub and enable **Pages** (Settings → Pages → deploy from `master`) — it's a
   static site, so it just works.
 
 ## Privacy
