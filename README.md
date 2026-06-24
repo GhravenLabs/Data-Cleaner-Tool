@@ -6,6 +6,12 @@ data back. **Your data never leaves your machine.**
 
 🔗 **Live demo:** https://ghravenlabs.github.io/Data-Cleaner-Tool/
 
+![Data Cleaner screenshot](assets/screenshot.png)
+
+## Portfolio proof
+- [Case study](PORTFOLIO-CASE-STUDY.md) — why this tool matters, what it proves, and how it could be sold as a small data-cleanup service.
+- GitHub Actions smoke check verifies the static app file and README links on every push.
+
 ## Why
 Messy CSV/Excel exports are everywhere — stray whitespace, duplicate rows, empty rows, inconsistent
 headers. This cleans them in one click, in pure client-side JavaScript, so it's safe for sensitive

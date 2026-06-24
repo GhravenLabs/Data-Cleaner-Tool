@@ -1,0 +1,22 @@
+name: Smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify static app
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          readme = Path("README.md").read_text(encoding="utf-8")
+          assert "Data Cleaner" in html
+          assert "download" in html.lower()
+          assert "ghravenlabs.github.io/Data-Cleaner-Tool" in readme
+          assert Path("assets/screenshot.png").is_file()
+          PY
