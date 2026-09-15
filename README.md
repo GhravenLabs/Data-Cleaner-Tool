@@ -10,7 +10,7 @@ data back. **Your data never leaves your machine.**
 
 ## Portfolio proof
 - [Case study](PORTFOLIO-CASE-STUDY.md) — why this tool matters, what it proves, and how it could be sold as a small data-cleanup service.
-- GitHub Actions smoke check verifies the static app file and README links on every push.
+- GitHub Actions runs CSV/TSV regression tests and checks the static app, demo URL, and screenshot on every push.
 
 ## Why
 Messy CSV/Excel exports are everywhere — stray whitespace, duplicate rows, empty rows, inconsistent
@@ -29,6 +29,15 @@ data (nothing is ever sent to a server).
 - **Vanilla HTML/CSS/JavaScript** — no frameworks, no build step, no dependencies
 - Custom CSV parse + serialize (quote-aware), in-browser only
 - Single self-contained file → works offline and deploys anywhere static
+
+Delimiter detection uses the first logical row (the headers), ignoring separators inside quoted
+fields. Comma is the default when the header is ambiguous. Use consistent column separators;
+automatic detection cannot disambiguate every malformed or mixed-format file.
+
+## Development checks
+
+With Node.js 24 installed, run `node --test tests/csv.test.cjs`. The tests exercise the app's
+actual parser and exporter using Node's built-in test runner; no package install is needed.
 
 ## Run it
 - **Locally:** open `index.html` in any browser.

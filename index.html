@@ -93,9 +93,25 @@
 let RAW=null, OUT=null, lastSummary="";
 const $=id=>document.getElementById(id);
 
+function detectDelimiter(text){
+  // Count separators in the first logical record, outside quoted fields.
+  let quoted=false, commas=0, tabs=0;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(c==='"'){
+      if(quoted && text[i+1]==='"'){i++;continue;}
+      quoted=!quoted;
+    } else if(!quoted){
+      if(c==='\n')break;
+      if(c===',')commas++;
+      if(c==='\t')tabs++;
+    }
+  }
+  return tabs>commas?'\t':',';
+}
 function parseCSV(text){
   text=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
-  const delim = (text.split("\t").length>text.split(",").length)?"\t":",";
+  const delim = detectDelimiter(text);
   const rows=[]; let row=[], cur="", q=false;
   for(let i=0;i<text.length;i++){const c=text[i];
     if(q){ if(c=='"'){ if(text[i+1]=='"'){cur+='"';i++;} else q=false; } else cur+=c; }
