@@ -13,6 +13,32 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+function cleanRows(rows, dedupe = true) {
+  const elements = new Map();
+  const sandbox = vm.createContext({ document: { getElementById(id) {
+    if (!elements.has(id)) elements.set(id, {
+      checked: id === 'o_dupes' && dedupe, value: '', style: {},
+      addEventListener() {},
+    });
+    return elements.get(id);
+  } } });
+  vm.runInContext(script, sandbox);
+  sandbox.setData(rows);
+  sandbox.clean();
+  return JSON.parse(vm.runInContext('JSON.stringify(OUT)', sandbox));
+}
+
+test('deduplication preserves distinct rows containing separator characters', () => {
+  const rows = [['First', 'Second'], ['a\u0001b', 'c'], ['a', 'b\u0001c']];
+  assert.deepEqual(cleanRows(rows), rows);
+});
+
+test('deduplication removes exact duplicates while keeping original order', () => {
+  const rows = [['First', 'Second'], ['a', 'b'], ['c', 'd'], ['a', 'b']];
+  assert.deepEqual(cleanRows(rows), rows.slice(0, 3));
+  assert.deepEqual(cleanRows(rows, false), rows);
+});
+
 test('TSV ignores commas inside quoted headers and values', () => {
   assert.deepEqual(parse('"Name, company, division"\tNotes\nAcme\t"a,b,c,d"'),
     [['Name, company, division', 'Notes'], ['Acme', 'a,b,c,d']]);

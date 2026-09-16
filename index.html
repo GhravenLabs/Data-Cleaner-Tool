@@ -171,7 +171,7 @@ function clean(){
   if($("o_emptyrows").checked){ const n=data.length; data=data.filter(r=>r.some(c=>String(c).trim()!=="")); removedEmpty=n-data.length; }
   // dupes
   let removedDupes=0;
-  if($("o_dupes").checked){ const seen=new Set(),out=[]; for(const r of data){const k=r.join(""); if(seen.has(k)){removedDupes++;continue;} seen.add(k);out.push(r);} data=out; }
+  if($("o_dupes").checked){ const seen=new Set(),out=[]; for(const r of data){const k=JSON.stringify(r); if(seen.has(k)){removedDupes++;continue;} seen.add(k);out.push(r);} data=out; }
   // empty cols
   let removedCols=0, colHeaders=header.slice(), cols=header.map((_,i)=>i);
   if($("o_emptycols").checked){
