@@ -175,10 +175,12 @@ function clean(){
   // empty cols
   let removedCols=0, colHeaders=header.slice(), cols=header.map((_,i)=>i);
   if($("o_emptycols").checked){
+    const width=rows.reduce((max,row)=>Math.max(max,row.length),header.length);
+    cols=Array.from({length:width},(_,i)=>i);
     const keep=cols.filter(ci=> data.some(r=>String(r[ci]||"").trim()!=="") || String(header[ci]||"").trim()!=="");
     removedCols=cols.length-keep.length;
-    colHeaders=keep.map(i=>header[i]);
-    data=data.map(r=>keep.map(i=>r[i]));
+    colHeaders=keep.map(i=>header[i]??"");
+    data=data.map(r=>keep.map(i=>r[i]??""));
   }
   OUT=[colHeaders].concat(data);
   const summary={rowsRemoved:removedEmpty+removedDupes, cellsChanged};

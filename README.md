@@ -33,6 +33,8 @@ data (nothing is ever sent to a server).
 Delimiter detection uses the first logical row (the headers), ignoring separators inside quoted
 fields. Comma is the default when the header is ambiguous. Use consistent column separators;
 automatic detection cannot disambiguate every malformed or mixed-format file.
+Empty-column removal checks the widest row, so populated cells beyond a short header
+are retained. Missing header names and cells are exported as empty strings.
 
 ## Development checks
 

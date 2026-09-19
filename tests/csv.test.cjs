@@ -13,11 +13,11 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
-function cleanRows(rows, dedupe = true) {
+function cleanRows(rows, dedupe = true, emptyColumns = false) {
   const elements = new Map();
   const sandbox = vm.createContext({ document: { getElementById(id) {
     if (!elements.has(id)) elements.set(id, {
-      checked: id === 'o_dupes' && dedupe, value: '', style: {},
+      checked: (id === 'o_dupes' && dedupe) || (id === 'o_emptycols' && emptyColumns), value: '', style: {},
       addEventListener() {},
     });
     return elements.get(id);
@@ -69,4 +69,16 @@ test('ordinary CSV and TSV preserve empty cells', () => {
 test('CSV export round-trips commas, quotes and newlines', () => {
   const rows = [['Name', 'Notes'], ['Acme', 'a,b\n"quoted"']];
   assert.deepEqual(parse(app.toCSV(rows)), rows);
+});
+
+test('empty-column removal preserves values beyond the header width', () => {
+  const rows = [['Name'], ['Acme', 'invoice note'], ['Beta']];
+  assert.deepEqual(cleanRows(rows, false, true),
+    [['Name', ''], ['Acme', 'invoice note'], ['Beta', '']]);
+});
+
+test('empty-column removal still drops truly empty extra columns', () => {
+  const rows = [['Name'], ['Acme', '', 'note'], ['Beta', '', '']];
+  assert.deepEqual(cleanRows(rows, false, true),
+    [['Name', ''], ['Acme', 'note'], ['Beta', '']]);
 });
