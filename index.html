@@ -110,6 +110,7 @@ function detectDelimiter(text){
   return tabs>commas?'\t':',';
 }
 function parseCSV(text){
+  text=text.replace(/^\uFEFF/, "");
 
   const delim = detectDelimiter(text);
   const rows=[]; let row=[], cur="", q=false;

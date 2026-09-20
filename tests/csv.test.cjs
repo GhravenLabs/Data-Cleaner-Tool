@@ -115,3 +115,7 @@ test('quoted line endings survive import and export', () => {
   assert.deepEqual(parse(app.toCSV(rows)), rows);
   assert.deepEqual(parse('Name,Notes\rAcme,ok'), [['Name','Notes'], ['Acme','ok']]);
 });
+
+test('initial BOM is removed while interior BOM stays in cell data', () => {
+  assert.deepEqual(parse('\uFEFFName,Notes\nAcme,a\uFEFFb'), [['Name','Notes'], ['Acme','a\uFEFFb']]);
+});
