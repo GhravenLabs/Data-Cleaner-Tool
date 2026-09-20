@@ -123,7 +123,7 @@ function parseCSV(text){
 }
 function toCSV(rows){
   return rows.map(r=>r.map(c=>{c=c==null?"":String(c);
-    return /[",\r\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
+    return /[",\r\n\t]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
 }
 function setData(rows){ RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true; }
 

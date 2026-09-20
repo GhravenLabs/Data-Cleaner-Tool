@@ -119,3 +119,8 @@ test('quoted line endings survive import and export', () => {
 test('initial BOM is removed while interior BOM stays in cell data', () => {
   assert.deepEqual(parse('\uFEFFName,Notes\nAcme,a\uFEFFb'), [['Name','Notes'], ['Acme','a\uFEFFb']]);
 });
+
+test('tabs inside exported cells do not change the detected delimiter', () => {
+  const rows = [['Name\tcompany\tdivision', 'Notes'], ['Acme','ok']];
+  assert.deepEqual(parse(app.toCSV(rows)), rows);
+});
