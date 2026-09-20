@@ -13,6 +13,32 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+function loadPasted(text) {
+  let loaded = null, alerted = false;
+  const sandbox = vm.createContext({
+    document: {getElementById: () => ({value: text, addEventListener(){}})},
+    alert: () => {alerted = true;},
+  });
+  vm.runInContext(script, sandbox);
+  sandbox.setData = rows => {loaded = JSON.parse(JSON.stringify(rows));};
+  sandbox.loadPaste();
+  return {loaded, alerted};
+}
+
+test('pasted TSV retains leading and trailing empty cells', () => {
+  assert.deepEqual(loadPasted('\tNotes\nAcme\t').loaded,
+    [['', 'Notes'], ['Acme', '']]);
+});
+
+test('paste preserves cell whitespace until cleaning is requested', () => {
+  assert.deepEqual(loadPasted(' Name,Notes\nAcme, value ').loaded,
+    [[' Name', 'Notes'], ['Acme', ' value ']]);
+});
+
+test('whitespace-only paste still shows the empty-input message', () => {
+  assert.deepEqual(loadPasted(' \t\n'), {loaded: null, alerted: true});
+});
+
 function cleanRows(rows, dedupe = true, emptyColumns = false) {
   const elements = new Map();
   const sandbox = vm.createContext({ document: { getElementById(id) {

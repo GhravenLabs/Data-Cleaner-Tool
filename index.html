@@ -197,7 +197,7 @@ function copyOut(){ if(!OUT)return; navigator.clipboard.writeText(toCSV(OUT)).th
 
 $("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
   const rd=new FileReader(); rd.onload=()=>setData(parseCSV(rd.result)); rd.readAsText(f);});
-function loadPaste(){const t=$("paste").value.trim(); if(!t){alert("Paste some CSV first.");return;} setData(parseCSV(t));}
+function loadPaste(){const t=$("paste").value; if(!t.trim()){alert("Paste some CSV first.");return;} setData(parseCSV(t));}
 function loadSample(){
   const s=`Name , Email,Amount,  City\n  Acme Corp , a@acme.com, 1200 ,Manila\nAcme Corp,a@acme.com,1200,Manila\n Beta LLC ,b@beta.io , 900,  Cebu\n,,,\nGamma Inc,g@gamma.com,, Davao \nBeta LLC,b@beta.io,900,Cebu`;
   $("paste").value=s; setData(parseCSV(s));

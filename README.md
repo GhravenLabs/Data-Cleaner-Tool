@@ -35,6 +35,8 @@ fields. Comma is the default when the header is ambiguous. Use consistent column
 automatic detection cannot disambiguate every malformed or mixed-format file.
 Empty-column removal checks the widest row, so populated cells beyond a short header
 are retained. Missing header names and cells are exported as empty strings.
+Pasting preserves leading/trailing tabs and cell whitespace; trimming is applied only
+when you select the trim option and clean the data.
 
 ## Development checks
 
