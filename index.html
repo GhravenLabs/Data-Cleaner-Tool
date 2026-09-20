@@ -102,7 +102,7 @@ function detectDelimiter(text){
       if(quoted && text[i+1]==='"'){i++;continue;}
       quoted=!quoted;
     } else if(!quoted){
-      if(c==='\n')break;
+      if(c==='\n'||c==='\r')break;
       if(c===',')commas++;
       if(c==='\t')tabs++;
     }
@@ -110,19 +110,19 @@ function detectDelimiter(text){
   return tabs>commas?'\t':',';
 }
 function parseCSV(text){
-  text=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+
   const delim = detectDelimiter(text);
   const rows=[]; let row=[], cur="", q=false;
   for(let i=0;i<text.length;i++){const c=text[i];
     if(q){ if(c=='"'){ if(text[i+1]=='"'){cur+='"';i++;} else q=false; } else cur+=c; }
-    else{ if(c=='"')q=true; else if(c==delim){row.push(cur);cur="";} else if(c=="\n"){row.push(cur);rows.push(row);row=[];cur="";} else cur+=c; }
+    else{ if(c=='"')q=true; else if(c==delim){row.push(cur);cur="";} else if(c=="\n"||c=="\r"){row.push(cur);rows.push(row);row=[];cur="";if(c=="\r"&&text[i+1]=="\n")i++;} else cur+=c; }
   }
   if(cur.length||row.length){row.push(cur);rows.push(row);}
   return rows;
 }
 function toCSV(rows){
   return rows.map(r=>r.map(c=>{c=c==null?"":String(c);
-    return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
+    return /[",\r\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
 }
 function setData(rows){ RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true; }
 

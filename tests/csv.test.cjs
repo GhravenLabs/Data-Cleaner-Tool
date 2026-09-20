@@ -108,3 +108,10 @@ test('empty-column removal still drops truly empty extra columns', () => {
   assert.deepEqual(cleanRows(rows, false, true),
     [['Name', ''], ['Acme', 'note'], ['Beta', '']]);
 });
+
+test('quoted line endings survive import and export', () => {
+  const rows = [['Name','Notes'], ['Acme','first\r\nsecond\rthird']];
+  assert.deepEqual(parse('Name,Notes\r\nAcme,"first\r\nsecond\rthird"'), rows);
+  assert.deepEqual(parse(app.toCSV(rows)), rows);
+  assert.deepEqual(parse('Name,Notes\rAcme,ok'), [['Name','Notes'], ['Acme','ok']]);
+});
