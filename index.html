@@ -126,10 +126,11 @@ function toCSV(rows){
     return /[",\r\n\t]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
 }
 function setData(rows){ RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true; }
+function columnCount(rows){return rows.reduce((width,row)=>Math.max(width,row.length),0);}
 
 function render(rows,cleaned){
   if(!rows||!rows.length){ $("tablewrap").innerHTML='<div class="empty">No rows.</div>'; return; }
-  const head=rows[0], body=rows.slice(1,51);
+  const head=Array.from({length:columnCount(rows)},(_,i)=>rows[0][i]??""), body=rows.slice(1,51);
   let h="<table><thead><tr>"+head.map(c=>"<th>"+esc(c)+"</th>").join("")+"</tr></thead><tbody>";
   h+=body.map(r=>"<tr>"+head.map((_,i)=>"<td>"+esc(r[i]||"")+"</td>").join("")+"</tr>").join("");
   h+="</tbody></table>";
@@ -138,7 +139,7 @@ function render(rows,cleaned){
 }
 function esc(s){return String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
 function statify(rows,cleaned){
-  const r=rows.length?rows.length-1:0, c=rows.length?rows[0].length:0;
+  const r=rows.length?rows.length-1:0, c=columnCount(rows);
   let html='<div class="stat"><b>'+r+'</b>rows</div><div class="stat"><b>'+c+'</b>columns</div>';
   if(cleaned){ html+='<div class="stat bad"><b>'+cleaned.rowsRemoved+'</b>rows removed</div>'
     +'<div class="stat good"><b>'+cleaned.cellsChanged+'</b>cells fixed</div>'; }

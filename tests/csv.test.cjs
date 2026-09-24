@@ -13,6 +13,38 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+function preview(rows, cleaned = false) {
+  const elements = new Map();
+  const sandbox = vm.createContext({document: {getElementById(id) {
+    if (!elements.has(id)) elements.set(id, {
+      checked: false, value: '', style: {}, addEventListener() {},
+    });
+    return elements.get(id);
+  }}});
+  vm.runInContext(script, sandbox);
+  sandbox.setData(rows);
+  if (cleaned) sandbox.clean();
+  return {table: elements.get('tablewrap').innerHTML, stats: elements.get('stats').innerHTML};
+}
+
+test('preview shows extra cells beyond a short header before and after cleaning', () => {
+  for (const cleaned of [false, true]) {
+    const view = preview([['Name'], ['Acme', '<invoice note>'], ['Beta']], cleaned);
+    assert.match(view.table, /<th>Name<\/th><th><\/th>/);
+    assert.match(view.table, /<td>Acme<\/td><td>&lt;invoice note&gt;<\/td>/);
+    assert.match(view.table, /<td>Beta<\/td><td><\/td>/);
+    assert.match(view.stats, /<b>2<\/b>columns/);
+  }
+});
+
+test('column count includes wider rows outside the 50-row preview', () => {
+  const rows = [['Name'], ...Array.from({length: 50}, () => ['Acme']), ['Last', 'note', 'extra']];
+  const view = preview(rows);
+  assert.match(view.stats, /<b>3<\/b>columns/);
+  assert.match(view.table, /<th>Name<\/th><th><\/th><th><\/th>/);
+  assert.doesNotMatch(view.table, /Last/);
+});
+
 function loadPasted(text) {
   let loaded = null, alerted = false;
   const sandbox = vm.createContext({
