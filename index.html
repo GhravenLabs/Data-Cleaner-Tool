@@ -113,17 +113,17 @@ function parseCSV(text){
   text=text.replace(/^\uFEFF/, "");
 
   const delim = detectDelimiter(text);
-  const rows=[]; let row=[], cur="", q=false;
+  const rows=[]; let row=[], cur="", q=false, recordStart=0;
   for(let i=0;i<text.length;i++){const c=text[i];
     if(q){ if(c=='"'){ if(text[i+1]=='"'){cur+='"';i++;} else q=false; } else cur+=c; }
-    else{ if(c=='"')q=true; else if(c==delim){row.push(cur);cur="";} else if(c=="\n"||c=="\r"){row.push(cur);rows.push(row);row=[];cur="";if(c=="\r"&&text[i+1]=="\n")i++;} else cur+=c; }
+    else{ if(c=='"')q=true; else if(c==delim){row.push(cur);cur="";} else if(c=="\n"||c=="\r"){row.push(cur);rows.push(row);row=[];cur="";if(c=="\r"&&text[i+1]=="\n")i++;recordStart=i+1;} else cur+=c; }
   }
-  if(cur.length||row.length){row.push(cur);rows.push(row);}
+  if(recordStart<text.length){row.push(cur);rows.push(row);}
   return rows;
 }
 function toCSV(rows){
   return rows.map(r=>r.map(c=>{c=c==null?"":String(c);
-    return /[",\r\n\t]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
+    return /[",\r\n\t]/.test(c)||(r.length===1&&c==="")?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
 }
 function setData(rows){ RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true; }
 function columnCount(rows){return rows.reduce((width,row)=>Math.max(width,row.length),0);}

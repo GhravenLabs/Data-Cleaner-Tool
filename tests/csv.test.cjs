@@ -13,6 +13,20 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('quoted empty final records are retained without a trailing newline', () => {
+  assert.deepEqual(parse('""'), [['']]);
+  assert.deepEqual(parse('Name\n""'), [['Name'], ['']]);
+  assert.deepEqual(parse('Name\r\n""'), [['Name'], ['']]);
+  assert.deepEqual(parse('Name\n'), [['Name']]);
+  assert.deepEqual(parse(''), []);
+});
+
+test('export preserves one-column empty records on reimport', () => {
+  for (const rows of [[['']], [['Name'], ['']], [[''], [''], ['Value']]]) {
+    assert.deepEqual(parse(app.toCSV(rows)), rows);
+  }
+});
+
 function preview(rows, cleaned = false) {
   const elements = new Map();
   const sandbox = vm.createContext({document: {getElementById(id) {
