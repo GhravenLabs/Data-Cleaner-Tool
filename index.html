@@ -195,7 +195,13 @@ function clean(){
 }
 function download(){ if(!OUT)return; const blob=new Blob([toCSV(OUT)],{type:"text/csv"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="cleaned.csv"; a.click(); }
-function copyOut(){ if(!OUT)return; navigator.clipboard.writeText(toCSV(OUT)).then(()=>{$("cpBtn").textContent="✓ Copied";setTimeout(()=>$("cpBtn").textContent="⧉ Copy to clipboard",1500);}); }
+async function copyOut(){
+  if(!OUT)return;
+  try { await navigator.clipboard.writeText(toCSV(OUT)); }
+  catch { alert("Clipboard access is unavailable. Use Download CSV to save your cleaned data."); return; }
+  $("cpBtn").textContent="✓ Copied";
+  setTimeout(()=>$("cpBtn").textContent="⧉ Copy to clipboard",1500);
+}
 
 $("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
   const rd=new FileReader(); rd.onload=()=>setData(parseCSV(rd.result)); rd.readAsText(f);});

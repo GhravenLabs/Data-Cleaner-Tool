@@ -13,6 +13,30 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('clipboard failures offer CSV download and leave copying retryable', async () => {
+  for (const clipboard of [undefined, {writeText: async () => {throw new Error('Denied');}}]) {
+    const messages = [];
+    const button = {textContent: 'Copy to clipboard', addEventListener() {}};
+    const sandbox = vm.createContext({
+      document: {getElementById: () => button}, navigator: {clipboard},
+      alert: message => messages.push(message),
+      setTimeout: () => assert.fail('Failure must not show a success timer'),
+    });
+    vm.runInContext(script, sandbox);
+    vm.runInContext('OUT = [["Name"], ["Acme"]]', sandbox);
+    await sandbox.copyOut();
+    assert.equal(messages.length, 1);
+    assert.match(messages[0], /download/i);
+    assert.equal(button.textContent, 'Copy to clipboard');
+    const copied = [];
+    sandbox.navigator.clipboard = {writeText: async text => copied.push(text)};
+    sandbox.setTimeout = () => {};
+    await sandbox.copyOut();
+    assert.deepEqual(copied, ['Name\nAcme']);
+    assert.match(button.textContent, /Copied/);
+  }
+});
+
 test('quoted empty final records are retained without a trailing newline', () => {
   assert.deepEqual(parse('""'), [['']]);
   assert.deepEqual(parse('Name\n""'), [['Name'], ['']]);
