@@ -13,6 +13,27 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('cleaning summary counts standardized headers once per changed cell', () => {
+  for (const trim of [false, true]) {
+    const elements = new Map();
+    const sandbox = vm.createContext({document: {getElementById(id) {
+      if (!elements.has(id)) elements.set(id, {
+        checked: id === 'o_headers' || (id === 'o_trim' && trim),
+        value: '', style: {}, addEventListener() {},
+      });
+      return elements.get(id);
+    }}});
+    vm.runInContext(script, sandbox);
+    sandbox.setData([[' Customer Name ', 'email'], ['Acme', 'a@example.com']]);
+    sandbox.clean();
+    assert.match(elements.get('summary').innerHTML, /fixed 1 cell\(s\)/);
+    assert.equal(vm.runInContext('OUT[0][0]', sandbox), 'customer_name');
+    // Cleaning starts from RAW, so repeated clicks retain an accurate count.
+    sandbox.clean();
+    assert.match(elements.get('summary').innerHTML, /fixed 1 cell\(s\)/);
+  }
+});
+
 test('clipboard failures offer CSV download and leave copying retryable', async () => {
   for (const clipboard of [undefined, {writeText: async () => {throw new Error('Denied');}}]) {
     const messages = [];

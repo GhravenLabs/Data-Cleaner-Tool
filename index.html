@@ -152,6 +152,7 @@ function clean(){
   const before=rows.length-1;
   let cellsChanged=0;
   const trim=$("o_trim").checked, coll=$("o_collapse").checked, fr=$("o_find").checked;
+  const headers=$("o_headers").checked;
   const fv=$("findv").value, rv=$("replv").value;
   // cell-level
   for(let i=0;i<rows.length;i++) for(let j=0;j<rows[i].length;j++){
@@ -159,12 +160,9 @@ function clean(){
     if(trim) v=v.trim();
     if(coll) v=v.replace(/\s{2,}/g," ");
     if(fr && fv) v=v.split(fv).join(rv);
+    if(headers && i===0) v=v.trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
     if(v!==o) cellsChanged++;
     rows[i][j]=v;
-  }
-  // headers
-  if($("o_headers").checked && rows.length){
-    rows[0]=rows[0].map(h=>h.trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,""));
   }
   const header=rows[0]||[];
   let data=rows.slice(1);
