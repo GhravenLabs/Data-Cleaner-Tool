@@ -90,7 +90,7 @@
 </div>
 
 <script>
-let RAW=null, OUT=null, lastSummary="";
+let RAW=null, OUT=null, lastSummary="", loadVersion=0;
 const $=id=>document.getElementById(id);
 
 function detectDelimiter(text){
@@ -125,7 +125,7 @@ function toCSV(rows){
   return rows.map(r=>r.map(c=>{c=c==null?"":String(c);
     return /[",\r\n\t]/.test(c)||(r.length===1&&c==="")?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
 }
-function setData(rows){ RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true; }
+function setData(rows){ loadVersion++; RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true; }
 function columnCount(rows){return rows.reduce((width,row)=>Math.max(width,row.length),0);}
 
 function render(rows,cleaned){
@@ -202,7 +202,8 @@ async function copyOut(){
 }
 
 $("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
-  const rd=new FileReader(); rd.onload=()=>setData(parseCSV(rd.result)); rd.readAsText(f);});
+  const version=++loadVersion;
+  const rd=new FileReader(); rd.onload=()=>{if(version===loadVersion)setData(parseCSV(rd.result));}; rd.readAsText(f);});
 function loadPaste(){const t=$("paste").value; if(!t.trim()){alert("Paste some CSV first.");return;} setData(parseCSV(t));}
 function loadSample(){
   const s=`Name , Email,Amount,  City\n  Acme Corp , a@acme.com, 1200 ,Manila\nAcme Corp,a@acme.com,1200,Manila\n Beta LLC ,b@beta.io , 900,  Cebu\n,,,\nGamma Inc,g@gamma.com,, Davao \nBeta LLC,b@beta.io,900,Cebu`;

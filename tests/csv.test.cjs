@@ -13,6 +13,31 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('late file reads cannot replace a newer file or pasted data', () => {
+  const elements = new Map(), readers = [];
+  const sandbox = vm.createContext({
+    document: {getElementById(id) {
+      if (!elements.has(id)) elements.set(id, {
+        value: '', style: {}, addEventListener(event, handler) {this[event] = handler;},
+      });
+      return elements.get(id);
+    }},
+    FileReader: class {constructor() {readers.push(this);} readAsText() {}},
+  });
+  vm.runInContext(script, sandbox);
+  const select = () => elements.get('file').change({target: {files: [{}]}});
+  const finish = (reader, text) => {reader.result = text; reader.onload();};
+  select(); select();
+  finish(readers[1], 'Name\nNew');
+  finish(readers[0], 'Name\nOld');
+  assert.equal(vm.runInContext('RAW[1][0]', sandbox), 'New');
+  select();
+  sandbox.document.getElementById('paste').value = 'Name\nPasted';
+  sandbox.loadPaste();
+  finish(readers[2], 'Name\nLate');
+  assert.equal(vm.runInContext('RAW[1][0]', sandbox), 'Pasted');
+});
+
 test('cleaning summary counts standardized headers once per changed cell', () => {
   for (const trim of [false, true]) {
     const elements = new Map();
