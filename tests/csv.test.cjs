@@ -13,6 +13,34 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('file read failures report the current request and preserve loaded data', () => {
+  const elements = new Map(), readers = [], alerts = [];
+  const sandbox = vm.createContext({
+    document: {getElementById(id) {
+      if (!elements.has(id)) elements.set(id, {
+        value: '', style: {}, addEventListener(event, handler) {this[event] = handler;},
+      });
+      return elements.get(id);
+    }},
+    alert: message => alerts.push(message),
+    FileReader: class {constructor() {readers.push(this);} readAsText() {}},
+  });
+  vm.runInContext(script, sandbox);
+  sandbox.setData([['Name'], ['Existing']]);
+  const select = () => elements.get('file').change({target: {files: [{}]}});
+  select(); select();
+  readers[0].onerror();
+  assert.equal(alerts.length, 0);
+  readers[1].onerror();
+  assert.equal(alerts.length, 1);
+  assert.match(alerts[0], /could not read/i);
+  assert.equal(vm.runInContext('RAW[1][0]', sandbox), 'Existing');
+  select();
+  sandbox.setData([['Name'], ['New']]);
+  readers[2].onerror();
+  assert.equal(alerts.length, 1);
+});
+
 test('late file reads cannot replace a newer file or pasted data', () => {
   const elements = new Map(), readers = [];
   const sandbox = vm.createContext({

@@ -203,7 +203,9 @@ async function copyOut(){
 
 $("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
   const version=++loadVersion;
-  const rd=new FileReader(); rd.onload=()=>{if(version===loadVersion)setData(parseCSV(rd.result));}; rd.readAsText(f);});
+  const rd=new FileReader(); rd.onload=()=>{if(version===loadVersion)setData(parseCSV(rd.result));};
+  rd.onerror=()=>{if(version===loadVersion)alert("Could not read the selected file. Your previous data is unchanged. Try selecting the file again or paste the CSV text.");};
+  rd.readAsText(f);});
 function loadPaste(){const t=$("paste").value; if(!t.trim()){alert("Paste some CSV first.");return;} setData(parseCSV(t));}
 function loadSample(){
   const s=`Name , Email,Amount,  City\n  Acme Corp , a@acme.com, 1200 ,Manila\nAcme Corp,a@acme.com,1200,Manila\n Beta LLC ,b@beta.io , 900,  Cebu\n,,,\nGamma Inc,g@gamma.com,, Davao \nBeta LLC,b@beta.io,900,Cebu`;
