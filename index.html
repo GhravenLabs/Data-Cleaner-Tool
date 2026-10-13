@@ -90,7 +90,7 @@
 </div>
 
 <script>
-let RAW=null, OUT=null, lastSummary="", loadVersion=0;
+let RAW=null, OUT=null, lastSummary="", loadVersion=0, copyVersion=0;
 const $=id=>document.getElementById(id);
 
 function detectDelimiter(text){
@@ -128,7 +128,7 @@ function toCSV(rows){
 }
 function setData(rows){
   if(!rows.length){alert("This file contains no CSV records. Your previous data is unchanged.");return;}
-  loadVersion++; RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true;
+  loadVersion++; resetCopy(); RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true;
 }
 function columnCount(rows){return rows.reduce((width,row)=>Math.max(width,row.length),0);}
 
@@ -187,6 +187,7 @@ function clean(){
     data=data.map(r=>keep.map(i=>r[i]??""));
   }
   OUT=[colHeaders].concat(data);
+  resetCopy();
   const summary={rowsRemoved:removedEmpty+removedDupes, cellsChanged};
   render(OUT,true); statify(OUT,summary);
   lastSummary="Cleaned: removed "+removedEmpty+" empty row(s), "+removedDupes+" duplicate row(s)"
@@ -201,12 +202,15 @@ function download(){ if(!OUT)return; const blob=new Blob([toCSV(OUT)],{type:"tex
   try { a.click(); }
   finally { setTimeout(()=>URL.revokeObjectURL(url),1000); }
 }
+function resetCopy(){copyVersion++; $("cpBtn").textContent="⧉ Copy to clipboard";}
 async function copyOut(){
   if(!OUT)return;
+  const version=++copyVersion;
   try { await navigator.clipboard.writeText(toCSV(OUT)); }
-  catch { alert("Clipboard access is unavailable. Use Download CSV to save your cleaned data."); return; }
+  catch { if(version===copyVersion)alert("Clipboard access is unavailable. Use Download CSV to save your cleaned data."); return; }
+  if(version!==copyVersion)return;
   $("cpBtn").textContent="✓ Copied";
-  setTimeout(()=>$("cpBtn").textContent="⧉ Copy to clipboard",1500);
+  setTimeout(()=>{if(version===copyVersion)resetCopy();},1500);
 }
 
 $("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;

@@ -13,6 +13,23 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('stale clipboard requests cannot label newly loaded data as copied', async () => {
+  let finish;
+  const button = {style: {}, addEventListener() {}};
+  const sandbox = vm.createContext({
+    document: {getElementById: () => button},
+    navigator: {clipboard: {writeText: () => new Promise(resolve => {finish=resolve;})}},
+    setTimeout: () => assert.fail('stale requests must not schedule a success reset'),
+  });
+  vm.runInContext(script, sandbox);
+  sandbox.setData([['Old']]);
+  const pending = sandbox.copyOut();
+  sandbox.setData([['New']]);
+  finish();
+  await pending;
+  assert.equal(button.textContent, '⧉ Copy to clipboard');
+});
+
 test('downloads release their object URLs, including when the click fails', () => {
   for (const fail of [false, true]) {
     const released = [], timers = [];
