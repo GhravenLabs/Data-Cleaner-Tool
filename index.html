@@ -125,7 +125,10 @@ function toCSV(rows){
   return rows.map(r=>r.map(c=>{c=c==null?"":String(c);
     return /[",\r\n\t]/.test(c)||(r.length===1&&c==="")?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
 }
-function setData(rows){ loadVersion++; RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true; }
+function setData(rows){
+  if(!rows.length){alert("This file contains no CSV records. Your previous data is unchanged.");return;}
+  loadVersion++; RAW=rows; OUT=rows; render(rows,false); statify(rows,null); $("state").style.display="none"; $("summary").innerHTML=""; $("dlBtn").disabled=true; $("cpBtn").disabled=true;
+}
 function columnCount(rows){return rows.reduce((width,row)=>Math.max(width,row.length),0);}
 
 function render(rows,cleaned){
@@ -147,7 +150,7 @@ function statify(rows,cleaned){
 }
 
 function clean(){
-  if(!RAW){alert("Load some data first.");return;}
+  if(!RAW || !RAW.length){alert("Load some data first.");return;}
   let rows=RAW.map(r=>r.slice());
   const before=rows.length-1;
   let cellsChanged=0;

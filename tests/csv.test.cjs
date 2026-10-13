@@ -13,6 +13,22 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('empty files do not replace previous data or produce negative row counts', () => {
+  const messages = [];
+  const sandbox = vm.createContext({
+    document: {getElementById: () => ({style: {}, addEventListener() {}})},
+    alert: message => messages.push(message),
+  });
+  vm.runInContext(script, sandbox);
+  sandbox.setData([['Name'], ['Existing']]);
+  sandbox.setData(sandbox.parseCSV('\uFEFF'));
+  assert.equal(vm.runInContext('RAW[1][0]', sandbox), 'Existing');
+  assert.match(messages[0], /no CSV records/);
+  vm.runInContext('RAW = []', sandbox);
+  sandbox.clean();
+  assert.match(messages[1], /Load some data/);
+});
+
 test('file read failures report the current request and preserve loaded data', () => {
   const elements = new Map(), readers = [], alerts = [];
   const sandbox = vm.createContext({
