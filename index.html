@@ -195,8 +195,12 @@ function clean(){
   $("summary").innerHTML="<b>What I did:</b> "+lastSummary;
   $("dlBtn").disabled=false; $("cpBtn").disabled=false;
 }
-function download(){ if(!OUT)return; const blob=new Blob([toCSV(OUT)],{type:"text/csv"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="cleaned.csv"; a.click(); }
+function download(){ if(!OUT)return; const blob=new Blob([toCSV(OUT)],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a"), url=URL.createObjectURL(blob);
+  a.href=url; a.download="cleaned.csv";
+  try { a.click(); }
+  finally { setTimeout(()=>URL.revokeObjectURL(url),1000); }
+}
 async function copyOut(){
   if(!OUT)return;
   try { await navigator.clipboard.writeText(toCSV(OUT)); }

@@ -13,6 +13,28 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('downloads release their object URLs, including when the click fails', () => {
+  for (const fail of [false, true]) {
+    const released = [], timers = [];
+    const sandbox = vm.createContext({
+      Blob,
+      document: {
+        getElementById: () => ({addEventListener() {}}),
+        createElement: () => ({click() {if(fail) throw Error('click failed');}}),
+      },
+      URL: {createObjectURL: () => 'blob:test', revokeObjectURL: url => released.push(url)},
+      setTimeout: callback => timers.push(callback),
+    });
+    vm.runInContext(script, sandbox);
+    vm.runInContext('OUT = [["Name"], ["Acme"]]', sandbox);
+    if(fail) assert.throws(() => sandbox.download(), /click failed/);
+    else sandbox.download();
+    assert.deepEqual(released, []);
+    timers.forEach(callback => callback());
+    assert.deepEqual(released, ['blob:test']);
+  }
+});
+
 test('unclosed quoted fields are rejected without discarding the prior dataset', () => {
   assert.throws(() => parse('Name\n"unfinished'), /not closed/);
   assert.deepEqual(parse('Name\n"closed"'), [['Name'], ['closed']]);
