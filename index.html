@@ -55,6 +55,7 @@
           <input type="file" id="file" accept=".csv,.tsv,.txt" style="display:none">
           <button class="btn" onclick="loadSample()">Use sample</button>
         </div>
+        <label for="paste">Paste CSV or TSV text</label>
         <textarea id="paste" placeholder="…or paste CSV here, then click Load"></textarea>
         <button class="btn pri" style="width:100%;margin-top:8px" onclick="loadPaste()">Load pasted text</button>
       </div>
@@ -68,7 +69,7 @@
         <label class="op"><input type="checkbox" id="o_emptycols"> Remove empty columns</label>
         <label class="op"><input type="checkbox" id="o_headers"> Standardize headers (lower_snake)</label>
         <label class="op"><input type="checkbox" id="o_find"> Find &amp; replace</label>
-        <div class="fr"><input id="findv" placeholder="find"><input id="replv" placeholder="replace with"></div>
+        <div class="fr"><input id="findv" aria-label="Find text" placeholder="find"><input id="replv" aria-label="Replace with" placeholder="replace with"></div>
         <button class="btn pri" style="width:100%;margin-top:12px" onclick="clean()">✨ Clean data</button>
       </div>
     </div>
@@ -78,7 +79,7 @@
         <h3>Preview <span id="state" class="tag" style="display:none">cleaned</span></h3>
         <div class="stats" id="stats"></div>
         <div class="tablewrap" id="tablewrap"><div class="empty">Load a CSV to begin. Try “Use sample”.</div></div>
-        <div class="summary" id="summary"></div>
+        <div class="summary" id="summary" role="status" aria-live="polite"></div>
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn pri" onclick="download()" id="dlBtn" disabled>⤓ Download clean CSV</button>
           <button class="btn" onclick="copyOut()" id="cpBtn" disabled>⧉ Copy to clipboard</button>
