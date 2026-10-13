@@ -13,6 +13,21 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('unclosed quoted fields are rejected without discarding the prior dataset', () => {
+  assert.throws(() => parse('Name\n"unfinished'), /not closed/);
+  assert.deepEqual(parse('Name\n"closed"'), [['Name'], ['closed']]);
+  const messages = [];
+  const sandbox = vm.createContext({
+    document: {getElementById: () => ({style: {}, addEventListener() {}})},
+    alert: message => messages.push(message),
+  });
+  vm.runInContext(script, sandbox);
+  sandbox.setData([['Name'], ['Existing']]);
+  sandbox.loadText('Name\n"unfinished');
+  assert.equal(vm.runInContext('RAW[1][0]', sandbox), 'Existing');
+  assert.match(messages[0], /not closed/);
+});
+
 test('empty files do not replace previous data or produce negative row counts', () => {
   const messages = [];
   const sandbox = vm.createContext({

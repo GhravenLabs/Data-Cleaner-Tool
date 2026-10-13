@@ -118,6 +118,7 @@ function parseCSV(text){
     if(q){ if(c=='"'){ if(text[i+1]=='"'){cur+='"';i++;} else q=false; } else cur+=c; }
     else{ if(c=='"')q=true; else if(c==delim){row.push(cur);cur="";} else if(c=="\n"||c=="\r"){row.push(cur);rows.push(row);row=[];cur="";if(c=="\r"&&text[i+1]=="\n")i++;recordStart=i+1;} else cur+=c; }
   }
+  if(q)throw new Error("A quoted field is not closed. Check the final quote and try again.");
   if(recordStart<text.length){row.push(cur);rows.push(row);}
   return rows;
 }
@@ -206,10 +207,14 @@ async function copyOut(){
 
 $("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
   const version=++loadVersion;
-  const rd=new FileReader(); rd.onload=()=>{if(version===loadVersion)setData(parseCSV(rd.result));};
+  const rd=new FileReader(); rd.onload=()=>{if(version===loadVersion)loadText(rd.result);};
   rd.onerror=()=>{if(version===loadVersion)alert("Could not read the selected file. Your previous data is unchanged. Try selecting the file again or paste the CSV text.");};
   rd.readAsText(f);});
-function loadPaste(){const t=$("paste").value; if(!t.trim()){alert("Paste some CSV first.");return;} setData(parseCSV(t));}
+function loadText(text){
+  try { setData(parseCSV(text)); }
+  catch(error){alert("Could not parse CSV: "+error.message+" Your previous data is unchanged.");}
+}
+function loadPaste(){const t=$("paste").value; if(!t.trim()){alert("Paste some CSV first.");return;} loadVersion++; loadText(t);}
 function loadSample(){
   const s=`Name , Email,Amount,  City\n  Acme Corp , a@acme.com, 1200 ,Manila\nAcme Corp,a@acme.com,1200,Manila\n Beta LLC ,b@beta.io , 900,  Cebu\n,,,\nGamma Inc,g@gamma.com,, Davao \nBeta LLC,b@beta.io,900,Cebu`;
   $("paste").value=s; setData(parseCSV(s));
