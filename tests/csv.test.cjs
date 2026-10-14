@@ -285,6 +285,11 @@ test('deduplication removes exact duplicates while keeping original order', () =
   assert.deepEqual(cleanRows(rows, false), rows);
 });
 
+test('deduplication treats missing trailing cells as empty cells', () => {
+  assert.deepEqual(cleanRows([['Name', 'Notes'], ['Acme'], ['Acme', ''], ['Beta', 'ok']]),
+    [['Name', 'Notes'], ['Acme'], ['Beta', 'ok']]);
+});
+
 test('TSV ignores commas inside quoted headers and values', () => {
   assert.deepEqual(parse('"Name, company, division"\tNotes\nAcme\t"a,b,c,d"'),
     [['Name, company, division', 'Notes'], ['Acme', 'a,b,c,d']]);
