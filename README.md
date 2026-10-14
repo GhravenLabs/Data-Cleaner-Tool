@@ -23,6 +23,7 @@ data (nothing is ever sent to a server).
 - **Remove empty columns** · **standardize headers** (`lower_snake_case`) · **find & replace**
 - **Live preview** (before/after) with row/column counts and a summary of exactly what changed
 - **Export** the cleaned CSV or copy to clipboard
+- Optional **Excel-compatible UTF-8 export** adds a BOM so older Excel versions detect accented and non-Latin text correctly; leave it off for a plain UTF-8 CSV.
 - Robust CSV parser (handles quoted fields, embedded commas/newlines, auto-detects comma vs tab)
 
 ## Tech

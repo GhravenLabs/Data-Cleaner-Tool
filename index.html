@@ -68,6 +68,7 @@
         <label class="op"><input type="checkbox" id="o_dupes" checked> Remove duplicate rows</label>
         <label class="op"><input type="checkbox" id="o_emptycols"> Remove empty columns</label>
         <label class="op"><input type="checkbox" id="o_headers"> Standardize headers (lower_snake)</label>
+        <label class="op"><input type="checkbox" id="o_excel"> Excel-compatible UTF-8 export</label>
         <label class="op"><input type="checkbox" id="o_find"> Find &amp; replace</label>
         <div class="fr"><input id="findv" aria-label="Find text" placeholder="find"><input id="replv" aria-label="Replace with" placeholder="replace with"></div>
         <button class="btn pri" style="width:100%;margin-top:12px" onclick="clean()">✨ Clean data</button>
@@ -200,7 +201,8 @@ function clean(){
   $("summary").innerHTML="<b>What I did:</b> "+lastSummary;
   $("dlBtn").disabled=false; $("cpBtn").disabled=false;
 }
-function download(){ if(!OUT)return; const blob=new Blob([toCSV(OUT)],{type:"text/csv;charset=utf-8"});
+function csvDownloadContent(rows, excelCompatible=false){return (excelCompatible?"\uFEFF":"")+toCSV(rows);}
+function download(){ if(!OUT)return; const blob=new Blob([csvDownloadContent(OUT,$("o_excel").checked)],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a"), url=URL.createObjectURL(blob);
   a.href=url; a.download="cleaned.csv";
   try { a.click(); }

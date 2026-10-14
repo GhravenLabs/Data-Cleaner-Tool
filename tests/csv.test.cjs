@@ -322,6 +322,13 @@ test('CSV export round-trips commas, quotes and newlines', () => {
   assert.deepEqual(parse(app.toCSV(rows)), rows);
 });
 
+test('Excel-compatible export adds one BOM without changing CSV data', () => {
+  const rows = [['Name'], ['Café']];
+  assert.equal(app.csvDownloadContent(rows, false), 'Name\nCafé');
+  assert.equal(app.csvDownloadContent(rows, true), '\uFEFFName\nCafé');
+  assert.deepEqual(parse(app.csvDownloadContent(rows, true)), rows);
+});
+
 test('empty-column removal preserves values beyond the header width', () => {
   const rows = [['Name'], ['Acme', 'invoice note'], ['Beta']];
   assert.deepEqual(cleanRows(rows, false, true),
