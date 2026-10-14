@@ -13,6 +13,12 @@ const app = vm.createContext({
 vm.runInContext(script, app);
 const parse = text => JSON.parse(JSON.stringify(app.parseCSV(text)));
 
+test('quotes inside unquoted fields are rejected instead of changing parser state', () => {
+  assert.throws(() => parse('Name,Notes\nAcme,bad"quote'), /unquoted field/);
+  assert.deepEqual(parse('Name,Notes\nAcme,"valid ""quote"""'),
+    [['Name', 'Notes'], ['Acme', 'valid "quote"']]);
+});
+
 test('stale clipboard requests cannot label newly loaded data as copied', async () => {
   let finish;
   const button = {style: {}, addEventListener() {}};
