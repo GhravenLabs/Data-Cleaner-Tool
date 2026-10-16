@@ -259,11 +259,12 @@ test('whitespace-only paste still shows the empty-input message', () => {
   assert.deepEqual(loadPasted(' \t\n'), {loaded: null, alerted: true});
 });
 
-function cleanRows(rows, dedupe = true, emptyColumns = false) {
+function cleanRows(rows, dedupe = true, emptyColumns = false, standardize = false) {
   const elements = new Map();
   const sandbox = vm.createContext({ document: { getElementById(id) {
     if (!elements.has(id)) elements.set(id, {
-      checked: (id === 'o_dupes' && dedupe) || (id === 'o_emptycols' && emptyColumns), value: '', style: {},
+      checked: (id === 'o_dupes' && dedupe) || (id === 'o_emptycols' && emptyColumns)
+        || (id === 'o_headers' && standardize), value: '', style: {},
       addEventListener() {},
     });
     return elements.get(id);
@@ -273,6 +274,14 @@ function cleanRows(rows, dedupe = true, emptyColumns = false) {
   sandbox.clean();
   return JSON.parse(vm.runInContext('JSON.stringify(OUT)', sandbox));
 }
+
+test('standardized headers stay unique when names normalize to the same value', () => {
+  const rows = [['First Name', 'first-name', 'first_name', '!!!'], ['Ada', 'Lovelace', 'Byron', 'x']];
+  assert.deepEqual(cleanRows(rows, false, false, true), [
+    ['first_name', 'first_name_2', 'first_name_3', 'column_4'],
+    ['Ada', 'Lovelace', 'Byron', 'x'],
+  ]);
+});
 
 test('deduplication preserves distinct rows containing separator characters', () => {
   const rows = [['First', 'Second'], ['a\u0001b', 'c'], ['a', 'b\u0001c']];

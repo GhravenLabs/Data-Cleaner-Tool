@@ -144,6 +144,16 @@ function render(rows,cleaned){
   $("state").style.display=cleaned?"inline-block":"none";
 }
 function esc(s){return String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
+function standardizeHeaders(headers){
+  const used=new Set();
+  return headers.map((header,index)=>{
+    const base=String(header??"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"column_"+(index+1);
+    let name=base, suffix=2;
+    while(used.has(name)){name=base?base+"_"+suffix:"column_"+suffix;suffix++;}
+    used.add(name);
+    return name;
+  });
+}
 function statify(rows,cleaned){
   const r=rows.length?rows.length-1:0, c=columnCount(rows);
   let html='<div class="stat"><b>'+r+'</b>rows</div><div class="stat"><b>'+c+'</b>columns</div>';
@@ -169,6 +179,10 @@ function clean(){
     if(headers && i===0) v=v.trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
     if(v!==o) cellsChanged++;
     rows[i][j]=v;
+  }
+  // headers
+  if(headers && rows.length){
+    rows[0]=standardizeHeaders(rows[0]);
   }
   const header=rows[0]||[];
   let data=rows.slice(1);
